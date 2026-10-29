@@ -569,7 +569,6 @@ const PALETTE = [
   { bg: '#f5eadf', ink: '#8a6447' }, { bg: '#f3eef2', ink: '#946283' },
 ];
 const NO_TYPE = { bg: '#f2ebe0', ink: '#c9b9a6' };
-const TYPE_SUGGEST = ['瑜伽', '皮拉提斯', '舞蹈', '重量訓練', '有氧', '伸展', '語言', '手作'];
 
 const IC = {
   user: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
@@ -1023,7 +1022,7 @@ function fillStudioSelect(city, selected) {
 /** 下拉選單＋「輸入新的」文字框：選單列出已輸入過的值，文字框才是實際送出的欄位 */
 function fillPick(sel, values, current) {
   const list = [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-Hant'));
-  setOptions(sel, [['', '（不填）'], ...list.map(v => [v, v]), [ADD_NEW, '＋ 輸入新的…']],
+  setOptions(sel, [['', ''], ...list.map(v => [v, v]), [ADD_NEW, '＋ 輸入新的…']],
     !current ? '' : list.includes(current) ? current : ADD_NEW);
   const input = $('#' + sel.dataset.pick);
   input.value = current || '';
@@ -1052,9 +1051,9 @@ function openCourseForm(id = null) {
   el.bookingMethod.value = c ? c.bookingMethod : '';
   el.notes.value = c ? c.notes : '';
   fillStudioSelect(city, c ? c.studioId : '');
-  const teachers = db.courses.filter(x => !x.isDemo).map(x => x.teacherName);
-  fillPick($('#c-teacher-sel'), teachers, c ? c.teacherName : '');
-  fillPick($('#c-type-sel'), [...db.courses.map(x => x.courseType), ...TYPE_SUGGEST], c ? c.courseType : '');
+  const mine = db.courses.filter(x => !x.isDemo);
+  fillPick($('#c-teacher-sel'), mine.map(x => x.teacherName), c ? c.teacherName : '');
+  fillPick($('#c-type-sel'), mine.map(x => x.courseType), c ? c.courseType : '');
   $('#dlg-course').showModal();
   el.courseName.focus();
 }
