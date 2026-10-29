@@ -206,6 +206,7 @@ dialog.sheet[open]{animation:slideIn .25s ease}
 .field .err:empty{display:none}
 [aria-invalid="true"]{border-color:var(--err)!important;background:var(--err-bg)!important}
 .timepair{display:flex;align-items:center;gap:6px}
+.pick-new{margin-top:6px}
 .form-note{font-size:.78rem;color:var(--ink-2);margin:12px 0 0}
 
 /* detail */
@@ -412,11 +413,12 @@ dl.kv dd{font-size:.94rem;word-break:break-word;white-space:pre-wrap}
           <div class="err" data-for="startTime"></div><div class="err" data-for="endTime"></div></div>
         <div class="field full"><label class="req" for="c-name">課程名稱</label>
           <input type="text" id="c-name" name="courseName" maxlength="100" autocomplete="off"><div class="err" data-for="courseName"></div></div>
-        <div class="field"><label for="c-teacher">老師名稱</label>
-          <input type="text" id="c-teacher" name="teacherName" maxlength="60" autocomplete="off"></div>
-        <div class="field"><label for="c-type">課程類型</label>
-          <input type="text" id="c-type" name="courseType" maxlength="40" list="type-list" autocomplete="off" placeholder="可自行輸入，例如：瑜伽">
-          <datalist id="type-list"></datalist></div>
+        <div class="field"><label for="c-teacher-sel">老師名稱</label>
+          <select id="c-teacher-sel" data-pick="c-teacher"></select>
+          <input type="text" class="pick-new" id="c-teacher" name="teacherName" maxlength="60" autocomplete="off" placeholder="輸入新的老師名稱" aria-label="新的老師名稱" hidden></div>
+        <div class="field"><label for="c-type-sel">課程類型</label>
+          <select id="c-type-sel" data-pick="c-type"></select>
+          <input type="text" class="pick-new" id="c-type" name="courseType" maxlength="40" autocomplete="off" placeholder="輸入新的類型，例如：瑜伽" aria-label="新的課程類型" hidden></div>
         <div class="field full"><label class="req" for="c-studio">教室</label>
           <select id="c-studio" name="studioId"></select>
           <div class="help">只列出所選城市的教室；選「＋ 新增教室…」可直接建立。</div>
@@ -558,6 +560,7 @@ const WD_EN = ['', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const NONE = '__none__';
 const NEW_STUDIO = '__new__';
+const ADD_NEW = '__add__';
 /* 課程類型色票：取自風格指南的柔和色 */
 const PALETTE = [
   { bg: '#f9ecef', ink: '#b25a70' }, { bg: '#eaf1f7', ink: '#5f86a8' },
@@ -1017,6 +1020,21 @@ function fillStudioSelect(city, selected) {
   setOptions(sel, opts, getStudio(selected)?.city === city ? selected : '');
   sel.dataset.prev = sel.value;
 }
+/** 下拉選單＋「輸入新的」文字框：選單列出已輸入過的值，文字框才是實際送出的欄位 */
+function fillPick(sel, values, current) {
+  const list = [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-Hant'));
+  setOptions(sel, [['', '（不填）'], ...list.map(v => [v, v]), [ADD_NEW, '＋ 輸入新的…']],
+    !current ? '' : list.includes(current) ? current : ADD_NEW);
+  const input = $('#' + sel.dataset.pick);
+  input.value = current || '';
+  input.hidden = sel.value !== ADD_NEW;
+}
+function onPickChange(sel) {
+  const input = $('#' + sel.dataset.pick), isNew = sel.value === ADD_NEW;
+  input.value = isNew ? '' : sel.value;
+  input.hidden = !isNew;
+  if (isNew) input.focus();
+}
 function openCourseForm(id = null) {
   const c = id ? getCourse(id) : null;
   if (id && !c) return;
@@ -1029,14 +1047,14 @@ function openCourseForm(id = null) {
   el.weekday.value = c ? c.weekday : (ui.view === 'day' ? ui.day : (ui.filters.weekday || ''));
   el.startTime.value = c ? c.startTime : '';
   el.endTime.value = c ? c.endTime : '';
+  el.endTime.dataset.auto = '';
   el.courseName.value = c ? c.courseName : '';
-  el.teacherName.value = c ? c.teacherName : '';
-  el.courseType.value = c ? c.courseType : '';
   el.bookingMethod.value = c ? c.bookingMethod : '';
   el.notes.value = c ? c.notes : '';
   fillStudioSelect(city, c ? c.studioId : '');
-  const types = [...new Set([...db.courses.map(x => x.courseType).filter(Boolean), ...TYPE_SUGGEST])];
-  $('#type-list').innerHTML = types.map(t => `<option value="${esc(t)}">`).join('');
+  const teachers = db.courses.filter(x => !x.isDemo).map(x => x.teacherName);
+  fillPick($('#c-teacher-sel'), teachers, c ? c.teacherName : '');
+  fillPick($('#c-type-sel'), [...db.courses.map(x => x.courseType), ...TYPE_SUGGEST], c ? c.courseType : '');
   $('#dlg-course').showModal();
   el.courseName.focus();
 }
@@ -1413,6 +1431,21 @@ $('#confirm-cancel').addEventListener('click', () => $('#dlg-confirm').close('')
 $('#import-file').addEventListener('change', e => importJson(e.target.files[0]));
 
 $('#c-city').addEventListener('change', e => fillStudioSelect(e.target.value, $('#c-studio').value));
+$$('select[data-pick]').forEach(sel => sel.addEventListener('change', () => onPickChange(sel)));
+// 設定開始時間後，結束時間預設為一小時後（結束時間空白、仍是上次自動帶入的值，或早於開始時才會改）
+function autoEndTime() {
+  const start = normTime($('#c-start').value), end = $('#c-end');
+  if (!TIME_RE.test(start)) return;
+  const cur = normTime(end.value);
+  if (cur && cur !== end.dataset.auto && toMin(cur) > toMin(start)) return;
+  const m = Math.min(toMin(start) + 60, 23 * 60 + 59);
+  end.value = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  end.dataset.auto = end.value;
+  end.removeAttribute('aria-invalid');
+  $('.err[data-for="endTime"]').textContent = '';
+}
+$('#c-start').addEventListener('input', autoEndTime);
+$('#c-start').addEventListener('change', autoEndTime);
 $('#c-studio').addEventListener('change', e => {
   const sel = e.target;
   if (sel.value !== NEW_STUDIO) { sel.dataset.prev = sel.value; return; }
