@@ -1,0 +1,1459 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>課表手帳</title>
+<meta name="theme-color" content="#faf6f0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="課表手帳">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Iansui&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* ================= design tokens（東京手帳風格） ================= */
+:root{
+  --bg:#faf6f0; --paper:#fffdf9; --oat:#f2ebe0; --oat-2:#e7dccb;
+  --coffee:#9a7b64; --ink:#3f3531; --ink-2:#7b6f68; --line:#ebe2d6;
+  --sakura:#e9b8c3; --sakura-soft:#f9ecef; --sakura-ink:#b25a70;
+  --sky:#5f86a8; --sky-soft:#eaf1f7; --mist:#a9bfd2;
+  --chk:#a4581c; --chk-bg:#fcf1e4; --chk-line:#eecfa8;
+  --ok:#5b8466;  --ok-bg:#e8f1ea;
+  --err:#b23b3b; --err-bg:#fbeaea;
+  --f-body:"Iansui","Noto Sans TC","PingFang TC","Heiti TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-serif:"Noto Serif TC","Songti TC","PMingLiU","MingLiU",serif;
+  --f-sans:"Noto Sans TC","PingFang TC","Heiti TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-en:"Cormorant Garamond","Times New Roman",Georgia,serif;
+  --f-num:"DM Sans","Helvetica Neue",Arial,var(--f-sans);
+  --r:16px; --r-s:12px;
+  --shadow:0 1px 2px rgba(80,60,50,.04),0 6px 18px rgba(80,60,50,.06);
+  --shadow-up:0 2px 4px rgba(80,60,50,.06),0 10px 24px rgba(80,60,50,.10);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.65}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--sky)}
+:focus-visible{outline:2px solid var(--mist);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* ================= buttons ================= */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--ink);border-radius:999px;background:var(--ink);color:#fff;padding:8px 18px;min-height:40px;font-weight:500;font-size:.92rem;white-space:nowrap;transition:background .15s,transform .1s,box-shadow .15s}
+.btn:hover{background:#2f2724;box-shadow:var(--shadow)}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:default;transform:none;box-shadow:none}
+.btn.ghost{background:var(--paper);color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{background:var(--oat);border-color:var(--oat-2)}
+.btn.danger{background:var(--err);border-color:var(--err)}
+.btn.danger:hover{background:#962f2f}
+.btn.ghost.danger-text{color:var(--err)}
+.btn.sm{min-height:34px;padding:4px 14px;font-size:.84rem}
+.ib{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--paper);display:inline-grid;place-items:center;color:var(--ink-2);transition:background .15s,color .15s}
+.ib:hover{background:var(--oat);color:var(--ink)}
+.ib.del:hover{background:var(--err-bg);color:var(--err);border-color:#efc9c9}
+.ib:active{transform:scale(.94)}
+
+/* ================= header ================= */
+.top{position:sticky;top:0;z-index:20;background:linear-gradient(var(--bg) 82%,rgba(250,246,240,0));padding-top:env(safe-area-inset-top,0px)}
+.top-in{max-width:1240px;margin:0 auto;padding:12px 16px 10px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand .en{font-family:var(--f-en);font-style:italic;font-size:1.35rem;color:var(--sakura-ink);line-height:1}
+.brand h1{margin:0;font-family:var(--f-serif);font-weight:600;font-size:1.25rem;letter-spacing:.06em;line-height:1.2}
+.top-acts{display:flex;gap:8px;align-items:center}
+.seg{display:inline-flex;background:var(--oat);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:none;background:none;border-radius:999px;padding:6px 16px;min-height:36px;font-size:.92rem;color:var(--ink-2);transition:background .15s,color .15s;white-space:nowrap}
+.seg button:hover{color:var(--ink);background:rgba(255,253,249,.6)}
+.seg button[aria-selected="true"]{background:var(--paper);color:var(--ink);font-weight:500;box-shadow:0 1px 3px rgba(80,60,50,.12)}
+.seg .cnt{font-family:var(--f-num);font-size:.74rem;color:var(--sakura-ink);margin-left:4px}
+.city-tabs{order:2;margin-right:auto}
+.top-acts{order:3}
+
+/* ================= main / toolbar ================= */
+.wrap{max-width:1240px;margin:0 auto;padding:0 16px 96px}
+.notice{margin:6px 0 10px;padding:10px 14px;border-radius:var(--r-s);background:var(--chk-bg);border:1px solid var(--chk-line);font-size:.88rem;display:flex;gap:10px;align-items:flex-start}
+.notice button{margin-left:auto}
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 10px}
+.search{position:relative;flex:1;min-width:200px;max-width:380px}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--coffee)}
+.search input[type=search]{width:100%;padding-left:36px}
+.filt-toggle{display:none}
+.badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--sakura-ink);color:#fff;font-family:var(--f-num);font-size:.7rem;font-weight:700}
+.badge:empty{display:none}
+
+input[type=text],input[type=search],input[type=url],input[type=tel],input[type=time],input[type=date],select,textarea{width:100%;border:1px solid var(--line);border-radius:var(--r-s);background:var(--paper);padding:8px 12px;min-height:40px;font-size:16px;line-height:1.5;transition:border-color .15s,background .15s}
+input:hover,select:hover,textarea:hover{border-color:var(--oat-2)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--mist);outline-offset:1px;border-color:var(--mist)}
+input[type=time],input[type=date]{font-family:var(--f-num)}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a7b64' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+textarea{resize:vertical;min-height:84px}
+
+.filters{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;padding:12px 14px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.filters .fl{display:flex;flex-direction:column;gap:3px;min-width:132px}
+.filters .fl > span{font-size:.76rem;color:var(--ink-2)}
+.filters .trange{min-width:0}
+.trange .row{display:flex;align-items:center;gap:6px}
+.trange input{width:118px}
+.presets{display:flex;gap:4px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:4px 12px;min-height:34px;font-size:.84rem;color:var(--ink-2);transition:background .15s,color .15s,border-color .15s;white-space:nowrap}
+.chip:hover{border-color:var(--oat-2);color:var(--ink);background:var(--oat)}
+.chip.on,.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip.today-chip:not(.on){color:var(--sakura-ink);border-color:var(--sakura)}
+.filters .clear{margin-left:auto}
+.fhint{font-size:.74rem;color:var(--err)}
+.fhint:empty{display:none}
+
+.count{display:flex;align-items:baseline;gap:8px;margin:14px 2px 10px;font-size:.86rem;color:var(--ink-2)}
+.count b{font-family:var(--f-num);font-size:1.2rem;color:var(--ink);font-weight:500}
+.count{flex-wrap:wrap}
+.count .upd{margin-left:auto;font-size:.78rem;color:var(--coffee);white-space:nowrap}
+.count .upd time{font-family:var(--f-num)}
+
+/* ================= day bar ================= */
+.daybar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0 0}
+.daybar .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+.daybar input[type=date]{width:auto;min-height:34px;padding:2px 10px;font-size:.88rem}
+.dayhd{display:flex;align-items:baseline;gap:10px;margin:18px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.dayhd .en{font-family:var(--f-en);font-style:italic;font-size:1.15rem;color:var(--sakura-ink)}
+.dayhd h2{margin:0;font-family:var(--f-serif);font-weight:600;font-size:1.2rem;letter-spacing:.04em}
+.dayhd .aside{margin-left:auto;font-size:.8rem;color:var(--ink-2);font-family:var(--f-num)}
+
+/* ================= course card ================= */
+.cc{position:relative;display:block;background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--tc);border-radius:12px;padding:8px 10px 9px 11px;cursor:pointer;transition:box-shadow .15s,transform .12s,border-color .15s;text-align:left}
+.cc:hover{box-shadow:var(--shadow-up);transform:translateY(-1px)}
+.cc:active{transform:translateY(0) scale(.99)}
+.cc-time{font-family:var(--f-num);font-weight:500;font-size:.82rem;color:var(--sky);letter-spacing:.01em}
+.cc-name{font-family:var(--f-serif);font-weight:600;font-size:.98rem;line-height:1.4;margin:1px 0 3px;word-break:break-word}
+.cc-meta{display:flex;flex-direction:column;gap:1px;font-size:.78rem;color:var(--ink-2);line-height:1.45}
+.cc-meta span{display:flex;align-items:center;gap:4px;min-width:0}
+.cc-meta svg{width:13px;height:13px;color:var(--coffee)}
+.cc-meta .na{color:#b3a79e}
+.cc-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tag{display:inline-flex;align-items:center;font-size:.72rem;font-weight:500;padding:0 8px;border-radius:999px;white-space:nowrap;line-height:1.75;background:var(--tc-bg,var(--oat));color:var(--tc,var(--coffee))}
+.tag.clash{background:var(--chk-bg);color:var(--chk);border:1px solid var(--chk-line);line-height:1.6}
+.tag.demo{background:var(--oat);color:var(--coffee);border:1px dashed var(--oat-2);line-height:1.6}
+.cc-acts{position:absolute;top:8px;right:8px;display:flex;gap:4px}
+.cc.with-acts{padding-right:92px}
+
+/* ================= week view ================= */
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;align-items:start}
+.week.one{grid-template-columns:minmax(0,420px)}
+.wcol{background:rgba(255,253,249,.55);border:1px solid var(--line);border-radius:var(--r);padding:8px;min-height:180px}
+.wcol.today{background:var(--sakura-soft);border-color:var(--sakura)}
+.wcol-hd{display:flex;align-items:baseline;gap:6px;margin:2px 4px 8px;font-weight:400}
+.wcol-hd .wd{font-family:var(--f-serif);font-weight:600;font-size:1rem}
+.wcol-hd .en{font-family:var(--f-num);font-size:.66rem;letter-spacing:.16em;color:var(--ink-2)}
+.wcol-hd .tt{font-size:.68rem;color:#fff;background:var(--sakura-ink);border-radius:99px;padding:0 7px;line-height:1.6}
+.wcol-hd .n{margin-left:auto;font-family:var(--f-num);font-size:.74rem;color:var(--ink-2)}
+.wcol-body{display:flex;flex-direction:column;gap:8px}
+.none{margin:6px 4px;font-size:.8rem;color:#b3a79e}
+
+/* ================= day view / list view ================= */
+.daylist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.lgroup + .lgroup{margin-top:18px}
+.lgroup-hd{display:flex;align-items:baseline;gap:8px;margin:0 2px 6px;font-family:var(--f-serif);font-weight:600;font-size:1rem}
+.lgroup-hd .en{font-family:var(--f-num);font-size:.68rem;letter-spacing:.16em;color:var(--ink-2);font-weight:500}
+.lgroup-hd .tt{font-family:var(--f-body);font-weight:500;font-size:.7rem;color:#fff;background:var(--sakura-ink);border-radius:99px;padding:0 7px;line-height:1.6}
+.ltable{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.lrow{display:grid;grid-template-columns:112px minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.2fr) 84px;gap:12px;align-items:center;padding:10px 14px 10px 12px;border-left:4px solid var(--tc);cursor:pointer;transition:background .12s}
+.lrow + .lrow{border-top:1px solid var(--line)}
+.lrow:hover{background:var(--bg)}
+.lrow .t{font-family:var(--f-num);font-weight:500;font-size:.9rem;color:var(--sky)}
+.lrow .nm{font-family:var(--f-serif);font-weight:600;line-height:1.4}
+.lrow .nm .tag{margin-left:6px;vertical-align:1px;font-family:var(--f-body)}
+.lrow .c{font-size:.86rem;color:var(--ink-2);display:flex;align-items:center;gap:4px;min-width:0}
+.lrow .c svg{color:var(--coffee);width:14px;height:14px}
+.lrow .acts{display:flex;gap:4px;justify-content:flex-end}
+
+/* ================= empty ================= */
+.empty{text-align:center;padding:48px 16px;background:var(--paper);border:1px dashed var(--oat-2);border-radius:var(--r)}
+.empty .en{font-family:var(--f-en);font-style:italic;font-size:1.5rem;color:var(--sakura-ink);display:block}
+.empty h2{font-family:var(--f-serif);font-weight:600;font-size:1.15rem;margin:4px 0 6px}
+.empty p{margin:0 auto 16px;color:var(--ink-2);font-size:.9rem;max-width:420px}
+.empty .acts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+
+/* ================= dialogs ================= */
+dialog{border:none;padding:0;border-radius:var(--r);background:var(--paper);color:var(--ink);width:min(640px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 32px);box-shadow:0 20px 60px rgba(63,53,49,.2);overflow:hidden}
+dialog[open]{animation:pop .2s ease}
+dialog::backdrop{background:rgba(63,53,49,.3)}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.dlg{display:flex;flex-direction:column;max-height:calc(100dvh - 32px);margin:0}
+.dlg-hd{display:flex;align-items:center;gap:10px;padding:14px 16px 12px 20px;border-bottom:1px solid var(--line)}
+.dlg-hd .en{font-family:var(--f-en);font-style:italic;font-size:1.05rem;color:var(--sakura-ink)}
+.dlg-hd h2{margin:0;font-family:var(--f-serif);font-weight:600;font-size:1.15rem;letter-spacing:.03em}
+.dlg-hd .ib{margin-left:auto;border:none;background:none}
+.dlg-bd{padding:16px 20px;overflow:auto;flex:1}
+.dlg-ft{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--paper)}
+.dlg-ft .left{margin-right:auto}
+dialog.narrow{width:min(440px,calc(100vw - 24px))}
+
+dialog.sheet{margin:0 0 0 auto;height:100dvh;max-height:100dvh;width:min(460px,100vw);max-width:100vw;border-radius:var(--r) 0 0 var(--r)}
+dialog.sheet .dlg{height:100%;max-height:100dvh}
+dialog.sheet[open]{animation:slideIn .25s ease}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+
+/* form */
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.fgrid .full{grid-column:1/-1}
+.field label,.field .lb{display:block;font-size:.8rem;color:var(--ink-2);margin-bottom:4px}
+.field .req::after{content:" *";color:var(--sakura-ink)}
+.field .help{font-size:.74rem;color:var(--ink-2);margin-top:3px}
+.field .err{font-size:.78rem;color:var(--err);margin-top:3px}
+.field .err:empty{display:none}
+[aria-invalid="true"]{border-color:var(--err)!important;background:var(--err-bg)!important}
+.timepair{display:flex;align-items:center;gap:6px}
+.form-note{font-size:.78rem;color:var(--ink-2);margin:12px 0 0}
+
+/* detail */
+.dt-top{padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.dt-top .tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.dt-top h3{margin:0;font-family:var(--f-serif);font-weight:600;font-size:1.35rem;line-height:1.35}
+.dt-top .when{font-family:var(--f-num);font-weight:500;color:var(--sky);font-size:1rem;margin-top:4px}
+.dt-top .when small{color:var(--ink-2);font-weight:400;margin-left:6px;font-family:var(--f-body)}
+.dt-sec{margin-top:16px}
+.dt-sec h4{margin:0 0 4px;font-family:var(--f-num);font-size:.7rem;letter-spacing:.18em;color:var(--sakura-ink);font-weight:500}
+dl.kv{margin:0;display:grid;grid-template-columns:92px 1fr;gap:0}
+dl.kv dt,dl.kv dd{padding:8px 0;border-bottom:1px solid var(--line);margin:0}
+dl.kv dt{font-size:.82rem;color:var(--ink-2)}
+dl.kv dd{font-size:.94rem;word-break:break-word;white-space:pre-wrap}
+.na{color:#b3a79e;font-size:.88rem}
+.navbtn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;padding:12px;border-radius:var(--r-s);background:var(--sky-soft);color:var(--sky);text-decoration:none;font-weight:500;transition:background .15s}
+.navbtn:hover{background:#dce8f2}
+.navbtn small{color:var(--ink-2);font-weight:400}
+.navbtn.off{background:var(--oat);color:#b3a79e;cursor:default}
+.lnk{display:inline-flex;align-items:center;gap:4px;text-decoration:none}
+.lnk:hover{text-decoration:underline}
+
+/* studio manager */
+.st-list{display:grid;gap:8px;margin-top:12px}
+.st{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--paper)}
+.st .nm{font-family:var(--f-serif);font-weight:600}
+.st .ad{font-size:.82rem;color:var(--ink-2)}
+.st .us{font-size:.74rem;color:var(--sky);font-family:var(--f-num)}
+.st .acts{display:flex;gap:4px}
+
+/* data */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.stat{padding:12px 14px;border-radius:var(--r-s);background:var(--oat)}
+.stat .k{font-size:.8rem;color:var(--ink-2)}
+.stat .v{font-family:var(--f-num);font-weight:500;font-size:1rem}
+.dgroup{padding:14px 0;border-top:1px solid var(--line)}
+.dgroup h3{margin:0 0 4px;font-family:var(--f-serif);font-weight:600;font-size:1rem}
+.dgroup p{margin:0 0 10px;font-size:.84rem;color:var(--ink-2)}
+.dgroup .acts{display:flex;gap:8px;flex-wrap:wrap}
+.confirm-msg{font-size:.94rem}
+.confirm-msg ul{margin:6px 0;padding-left:20px;font-size:.88rem;color:var(--ink-2)}
+.confirm-type{margin-top:12px}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+.toast{background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:.9rem;box-shadow:var(--shadow-up);animation:pop .2s ease;max-width:calc(100vw - 32px)}
+.toast.err{background:var(--err)}
+.toast.ok::before{content:"✓ ";color:#bfe0c8}
+
+.fab{display:none}
+.foot{margin:40px 0 0;text-align:center;font-size:.76rem;color:var(--ink-2)}
+.foot .sig{display:block;font-family:var(--f-en);font-style:italic;font-size:1.2rem;color:var(--ink)}
+
+/* ================= responsive ================= */
+@media (max-width:1080px){
+  .week{grid-template-columns:1fr}
+  .wcol{min-height:0;padding:10px}
+  .wcol-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+  .wcol.is-empty{padding:6px 10px;display:flex;align-items:baseline;gap:10px}
+  .wcol.is-empty .wcol-hd{margin:0}
+  .wcol.is-empty .none{margin:0}
+}
+@media (max-width:800px){
+  .lrow{grid-template-columns:96px 1fr 76px;grid-template-areas:"t nm acts" "t te acts" "t st acts";row-gap:0}
+  .lrow .t{grid-area:t;align-self:start;padding-top:2px}
+  .lrow .nm{grid-area:nm}
+  .lrow .c.lte{grid-area:te}
+  .lrow .c.lst{grid-area:st}
+  .lrow .acts{grid-area:acts}
+}
+@media (max-width:720px){
+  .top-in{gap:8px 10px;padding-bottom:8px}
+  .brand{margin-right:auto}
+  .city-tabs{order:4;width:100%;display:flex;margin-right:0}
+  .city-tabs button{flex:1}
+  .top-acts .btn .lbl{display:none}
+  .top-acts .btn{padding:6px 10px}
+  .top-acts .add{display:none}
+  .fab{display:inline-flex;position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:30;box-shadow:var(--shadow-up);min-height:48px;padding:10px 20px}
+  .toolbar .views{order:1;width:100%;display:flex}
+  .toolbar .views button{flex:1}
+  .search{order:2;max-width:none}
+  .filt-toggle{display:inline-flex;order:3}
+  .filters{display:none}
+  .filters.open{display:flex}
+  .filters .fl{flex:1 1 140px}
+  .filters .trange{flex-basis:100%}
+  .trange input{flex:1;width:auto}
+  .filters .clear{margin-left:0;width:100%}
+  .daylist{grid-template-columns:1fr}
+  .wcol-body{grid-template-columns:1fr}
+  .fgrid{grid-template-columns:1fr}
+  dialog:not(.sheet){width:100vw;max-width:100vw;margin:auto 0 0;border-radius:var(--r) var(--r) 0 0;max-height:92dvh}
+  dialog:not(.sheet) .dlg{max-height:92dvh}
+  dialog.sheet{margin:auto 0 0;width:100vw;height:auto;max-height:90dvh;border-radius:var(--r) var(--r) 0 0}
+  dialog.sheet .dlg{height:auto;max-height:90dvh}
+  dialog[open],dialog.sheet[open]{animation:slideUp .25s ease}
+  .stats{grid-template-columns:1fr}
+  #toast{bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+  dl.kv{grid-template-columns:80px 1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><span class="en">My Classes</span><h1>課表手帳</h1></div>
+    <nav class="seg city-tabs" role="tablist" aria-label="城市分頁">
+      <button type="button" role="tab" id="tab-taipei" data-action="city" data-city="taipei" aria-selected="true">台北課程<span class="cnt"></span></button>
+      <button type="button" role="tab" id="tab-zhongli" data-action="city" data-city="zhongli" aria-selected="false">中壢課程<span class="cnt"></span></button>
+    </nav>
+    <div class="top-acts">
+      <button type="button" class="btn ghost" data-action="studios" title="教室管理"><svg class="i" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg><span class="lbl">教室管理</span></button>
+      <button type="button" class="btn ghost" data-action="data" title="備份／還原"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg><span class="lbl">備份／還原</span></button>
+      <button type="button" class="btn add" data-action="add-course">＋ 新增課程</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="notices"></div>
+
+  <section class="toolbar" aria-label="檢視與搜尋">
+    <div class="seg views" role="tablist" aria-label="檢視模式">
+      <button type="button" role="tab" data-action="view" data-view="week" aria-selected="true">整週</button>
+      <button type="button" role="tab" data-action="view" data-view="day" aria-selected="false">單日</button>
+      <button type="button" role="tab" data-action="view" data-view="list" aria-selected="false">清單</button>
+    </div>
+    <label class="search"><span class="sr">搜尋</span>
+      <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="f-q" placeholder="搜尋課程、老師、教室" autocomplete="off">
+    </label>
+    <button type="button" class="chip filt-toggle" data-action="toggle-filters" aria-expanded="false" aria-controls="filters">篩選 <span class="badge" id="filt-n"></span></button>
+  </section>
+
+  <section class="filters" id="filters" aria-label="篩選條件">
+    <label class="fl" id="fl-weekday"><span>星期</span>
+      <select id="f-weekday"><option value="">全部星期</option></select>
+    </label>
+    <label class="fl"><span>課程種類</span><select id="f-type"></select></label>
+    <label class="fl"><span>教室</span><select id="f-studio"></select></label>
+    <div class="fl trange">
+      <span>時間區間（顯示完全落在此時段內的課）</span>
+      <div class="row">
+        <input type="time" id="f-from" step="300" aria-label="最早開始時間">
+        <span>–</span>
+        <input type="time" id="f-to" step="300" aria-label="最晚結束時間">
+      </div>
+      <div class="presets" style="margin-top:6px">
+        <button type="button" class="chip" data-action="preset" data-from="06:00" data-to="12:00">上午</button>
+        <button type="button" class="chip" data-action="preset" data-from="12:00" data-to="18:00">下午</button>
+        <button type="button" class="chip" data-action="preset" data-from="18:00" data-to="23:59">晚上</button>
+      </div>
+      <span class="fhint" id="f-hint"></span>
+    </div>
+    <button type="button" class="btn ghost sm clear" data-action="clear-filters">清除篩選</button>
+  </section>
+
+  <div class="daybar" id="daybar" hidden></div>
+  <p class="count" id="count" aria-live="polite"></p>
+  <div id="view"></div>
+
+  <footer class="foot">
+    <span class="sig">see you in class</span>
+    資料只保存在這台裝置的這個瀏覽器中。更換手機或電腦前，請到「備份／還原」匯出 JSON 檔。
+  </footer>
+</main>
+
+<button type="button" class="btn fab" data-action="add-course">＋ 新增課程</button>
+
+<!-- ============ 課程詳細 ============ -->
+<dialog id="dlg-detail" class="sheet" aria-labelledby="detail-title">
+  <div class="dlg">
+    <div class="dlg-hd"><span class="en">Class</span><h2 id="detail-title">課程資訊</h2>
+      <button type="button" class="ib" data-action="close" aria-label="關閉"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="dlg-bd" id="detail-body"></div>
+    <div class="dlg-ft">
+      <button type="button" class="btn ghost danger-text left" id="detail-del">刪除</button>
+      <button type="button" class="btn ghost" data-action="close">關閉</button>
+      <button type="button" class="btn" id="detail-edit">編輯課程</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- ============ 課程表單 ============ -->
+<dialog id="dlg-course" aria-labelledby="course-title">
+  <form class="dlg" id="course-form" novalidate>
+    <div class="dlg-hd"><span class="en">Course</span><h2 id="course-title">新增課程</h2>
+      <button type="button" class="ib" data-action="close" aria-label="關閉"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="dlg-bd">
+      <div class="fgrid">
+        <div class="field"><label class="req" for="c-city">城市／區域</label>
+          <select id="c-city" name="city"><option value="taipei">台北</option><option value="zhongli">中壢</option></select><div class="err" data-for="city"></div></div>
+        <div class="field"><label class="req" for="c-weekday">星期</label>
+          <select id="c-weekday" name="weekday"><option value="">請選擇</option></select><div class="err" data-for="weekday"></div></div>
+        <div class="field full"><span class="lb req">上課時間</span>
+          <div class="timepair">
+            <input type="time" id="c-start" name="startTime" step="300" aria-label="開始時間">
+            <span>–</span>
+            <input type="time" id="c-end" name="endTime" step="300" aria-label="結束時間">
+          </div>
+          <div class="err" data-for="startTime"></div><div class="err" data-for="endTime"></div></div>
+        <div class="field full"><label class="req" for="c-name">課程名稱</label>
+          <input type="text" id="c-name" name="courseName" maxlength="100" autocomplete="off"><div class="err" data-for="courseName"></div></div>
+        <div class="field"><label for="c-teacher">老師名稱</label>
+          <input type="text" id="c-teacher" name="teacherName" maxlength="60" autocomplete="off"></div>
+        <div class="field"><label for="c-type">課程類型</label>
+          <input type="text" id="c-type" name="courseType" maxlength="40" list="type-list" autocomplete="off" placeholder="可自行輸入，例如：瑜伽">
+          <datalist id="type-list"></datalist></div>
+        <div class="field full"><label class="req" for="c-studio">教室</label>
+          <select id="c-studio" name="studioId"></select>
+          <div class="help">只列出所選城市的教室；選「＋ 新增教室…」可直接建立。</div>
+          <div class="err" data-for="studioId"></div></div>
+        <div class="field full"><label for="c-booking">預約方式</label>
+          <input type="text" id="c-booking" name="bookingMethod" maxlength="500" autocomplete="off" placeholder="例如：官方 LINE 預約、App 預約，或貼上預約網址"></div>
+        <div class="field full"><label for="c-notes">備註</label>
+          <textarea id="c-notes" name="notes" maxlength="3000"></textarea></div>
+      </div>
+      <p class="form-note">* 為必填欄位</p>
+    </div>
+    <div class="dlg-ft">
+      <button type="button" class="btn ghost" data-action="close">取消</button>
+      <button type="submit" class="btn">儲存課程</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ============ 教室管理 ============ -->
+<dialog id="dlg-studios" aria-labelledby="studios-title">
+  <div class="dlg">
+    <div class="dlg-hd"><span class="en">Studios</span><h2 id="studios-title">教室管理</h2>
+      <button type="button" class="ib" data-action="close" aria-label="關閉"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="dlg-bd">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div class="seg" role="tablist" aria-label="教室城市" id="st-city">
+          <button type="button" role="tab" data-action="st-city" data-city="taipei">台北</button>
+          <button type="button" role="tab" data-action="st-city" data-city="zhongli">中壢</button>
+        </div>
+        <button type="button" class="btn sm" data-action="add-studio" style="margin-left:auto">＋ 新增教室</button>
+      </div>
+      <div class="st-list" id="st-list"></div>
+    </div>
+  </div>
+</dialog>
+
+<!-- ============ 教室表單 ============ -->
+<dialog id="dlg-studio" aria-labelledby="studio-title">
+  <form class="dlg" id="studio-form" novalidate>
+    <div class="dlg-hd"><span class="en">Studio</span><h2 id="studio-title">新增教室</h2>
+      <button type="button" class="ib" data-action="close" aria-label="關閉"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="dlg-bd">
+      <div class="fgrid">
+        <div class="field"><label class="req" for="s-name">教室名稱</label>
+          <input type="text" id="s-name" name="studioName" maxlength="100" autocomplete="off"><div class="err" data-for="studioName"></div></div>
+        <div class="field"><label class="req" for="s-city">所屬城市</label>
+          <select id="s-city" name="city"><option value="taipei">台北</option><option value="zhongli">中壢</option></select>
+          <div class="help" id="s-city-help"></div><div class="err" data-for="city"></div></div>
+        <div class="field full"><label for="s-address">完整地址</label>
+          <input type="text" id="s-address" name="address" maxlength="300" autocomplete="off"></div>
+        <div class="field full"><label for="s-maps">Google Maps 導航網址</label>
+          <input type="url" id="s-maps" name="googleMapsUrl" maxlength="2000" placeholder="https://maps.app.goo.gl/…">
+          <div class="help">未填時，導航按鈕會改用上方地址搜尋 Google Maps。</div><div class="err" data-for="googleMapsUrl"></div></div>
+        <div class="field"><label for="s-line">官方 LINE</label>
+          <input type="text" id="s-line" name="line" maxlength="200" placeholder="@帳號 或 網址" autocomplete="off"><div class="err" data-for="line"></div></div>
+        <div class="field"><label for="s-ig">Instagram</label>
+          <input type="text" id="s-ig" name="instagram" maxlength="200" placeholder="@帳號 或 網址" autocomplete="off"><div class="err" data-for="instagram"></div></div>
+        <div class="field full"><label for="s-booking">教室預約連結</label>
+          <input type="url" id="s-booking" name="bookingUrl" maxlength="2000" placeholder="https://"><div class="err" data-for="bookingUrl"></div></div>
+        <div class="field"><label for="s-phone">電話</label>
+          <input type="tel" id="s-phone" name="phone" maxlength="50" autocomplete="off"></div>
+        <div class="field"><label for="s-web">網站</label>
+          <input type="url" id="s-web" name="website" maxlength="2000" placeholder="https://"><div class="err" data-for="website"></div></div>
+        <div class="field full"><label for="s-transport">交通方式與備註</label>
+          <textarea id="s-transport" name="transportNotes" maxlength="2000" placeholder="例如：捷運 ○○ 站 2 號出口步行 5 分鐘"></textarea></div>
+      </div>
+      <p class="form-note">* 為必填欄位</p>
+    </div>
+    <div class="dlg-ft">
+      <button type="button" class="btn ghost" data-action="close">取消</button>
+      <button type="submit" class="btn">儲存教室</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ============ 備份／還原 ============ -->
+<dialog id="dlg-data" aria-labelledby="data-title">
+  <div class="dlg">
+    <div class="dlg-hd"><span class="en">Backup</span><h2 id="data-title">備份／還原</h2>
+      <button type="button" class="ib" data-action="close" aria-label="關閉"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="dlg-bd">
+      <div class="stats" id="data-stats"></div>
+      <div class="dgroup"><h3>匯出備份</h3><p>將台北與中壢的所有課程、教室一併存成 JSON 檔。</p>
+        <div class="acts"><button type="button" class="btn" data-action="export">匯出 JSON</button></div></div>
+      <div class="dgroup"><h3>匯入還原</h3><p>選擇先前匯出的 JSON 檔；確認後會覆蓋目前所有資料。</p>
+        <div class="acts"><button type="button" class="btn ghost" data-action="import">選擇 JSON 檔…</button></div></div>
+      <div class="dgroup"><h3>示範資料</h3><p id="demo-desc">示範資料的名稱都標有「【示範】」，不是真實課表。</p>
+        <div class="acts"><button type="button" class="btn ghost" data-action="load-demo" id="btn-load-demo">載入示範資料</button>
+          <button type="button" class="btn ghost danger-text" data-action="clear-demo" id="btn-clear-demo">清除示範資料</button></div></div>
+      <div class="dgroup"><h3>清除所有資料</h3><p>刪除這個瀏覽器中所有課程與教室（台北、中壢都會清除）。建議先匯出備份。</p>
+        <div class="acts"><button type="button" class="btn danger" data-action="clear-all">清除所有資料…</button></div></div>
+    </div>
+  </div>
+</dialog>
+
+<!-- ============ 確認視窗 ============ -->
+<dialog id="dlg-confirm" class="narrow" aria-labelledby="confirm-title">
+  <form class="dlg" method="dialog" id="confirm-form">
+    <div class="dlg-hd"><h2 id="confirm-title">確認</h2></div>
+    <div class="dlg-bd">
+      <div class="confirm-msg" id="confirm-msg"></div>
+      <div class="field confirm-type" id="confirm-type-wrap" hidden>
+        <label for="confirm-type" id="confirm-type-label"></label>
+        <input type="text" id="confirm-type" autocomplete="off">
+      </div>
+    </div>
+    <div class="dlg-ft">
+      <button type="button" class="btn ghost" id="confirm-cancel">取消</button>
+      <button type="submit" class="btn" value="ok" id="confirm-ok">確定</button>
+    </div>
+  </form>
+</dialog>
+
+<input type="file" id="import-file" accept=".json,application/json" hidden>
+<div id="toast" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   課表手帳：單檔、離線、localStorage 保存
+   資料結構
+     db.courses[]  { id, city, weekday(1=週一…7=週日), startTime, endTime,
+                     courseName, teacherName, studioId, bookingMethod,
+                     courseType, notes, isDemo, createdAt, updatedAt }
+     db.studios[]  { id, city, studioName, address, googleMapsUrl, phone,
+                     website, line, instagram, bookingUrl, transportNotes,
+                     isDemo, createdAt, updatedAt }
+     db.typeColors { 課程類型: 色票索引 }
+   ===================================================================== */
+
+/* ---------- 常數 ---------- */
+const STORAGE_KEY = 'courseSchedule.data.v1';
+const UI_KEY = 'courseSchedule.ui.v1';
+const APP_ID = 'course-schedule';
+const DATA_VERSION = 1;
+const CITIES = { taipei: '台北', zhongli: '中壢' };
+const WD = ['', '一', '二', '三', '四', '五', '六', '日'];
+const WD_EN = ['', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+const NONE = '__none__';
+const NEW_STUDIO = '__new__';
+/* 課程類型色票：取自風格指南的柔和色 */
+const PALETTE = [
+  { bg: '#f9ecef', ink: '#b25a70' }, { bg: '#eaf1f7', ink: '#5f86a8' },
+  { bg: '#e8f1ea', ink: '#5b8466' }, { bg: '#fcf1e4', ink: '#a4581c' },
+  { bg: '#efeaf5', ink: '#7a68a0' }, { bg: '#e4f0ef', ink: '#4c857f' },
+  { bg: '#f5eadf', ink: '#8a6447' }, { bg: '#f3eef2', ink: '#946283' },
+];
+const NO_TYPE = { bg: '#f2ebe0', ink: '#c9b9a6' };
+const TYPE_SUGGEST = ['瑜伽', '皮拉提斯', '舞蹈', '重量訓練', '有氧', '伸展', '語言', '手作'];
+
+const IC = {
+  user: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
+  pin: '<svg class="i" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>',
+  edit: '<svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg>',
+  trash: '<svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+  map: '<svg class="i" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>',
+  ext: '<svg class="i" viewBox="0 0 24 24" style="width:12px;height:12px"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg>',
+};
+
+/* ---------- 狀態 ---------- */
+let db = emptyDb();
+let storageOk = true;
+let lastSaved = '';   // 最後一次儲存資料的時間（ISO 字串）
+const notices = [];
+const ui = {
+  city: 'taipei', view: 'week', day: todayWd(), dayDate: '', filtersOpen: false,
+  filters: { weekday: '', type: '', studioId: '', from: '', to: '', q: '' },
+};
+let overlapIds = new Set();
+
+/* ---------- 小工具 ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+function emptyDb() { return { courses: [], studios: [], typeColors: {} }; }
+function uid(prefix) { return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function str(v, max = 500) { return typeof v === 'string' ? v.trim().slice(0, max) : (typeof v === 'number' && isFinite(v) ? String(v) : ''); }
+function toMin(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+function normTime(v) { return str(v, 8).slice(0, 5); }
+function todayWd(offset = 0) { const d = new Date(); d.setDate(d.getDate() + offset); return d.getDay() === 0 ? 7 : d.getDay(); }
+function isoDate(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function dateFromOffset(offset) { const d = new Date(); d.setDate(d.getDate() + offset); return isoDate(d); }
+function wdOfIso(iso) { const [y, m, d] = iso.split('-').map(Number); const w = new Date(y, m - 1, d).getDay(); return w === 0 ? 7 : w; }
+function nowIso() { return new Date().toISOString(); }
+function na(text = '尚未設定') { return `<span class="na">${text}</span>`; }
+
+function safeUrl(v) {
+  const s = str(v, 2000);
+  if (!s) return '';
+  try { const u = new URL(s); return /^https?:$/.test(u.protocol) ? u.href : ''; } catch { return ''; }
+}
+function lineUrl(v) {
+  const s = str(v, 200);
+  if (!s) return '';
+  if (/^https?:\/\//i.test(s)) return safeUrl(s);
+  if (/^@[\w.\-]{2,40}$/.test(s)) return 'https://line.me/R/ti/p/' + encodeURIComponent(s);
+  return '';
+}
+function igUrl(v) {
+  const s = str(v, 200);
+  if (!s) return '';
+  if (/^https?:\/\//i.test(s)) return safeUrl(s);
+  const h = s.replace(/^@/, '');
+  return /^[A-Za-z0-9._]{1,30}$/.test(h) ? `https://www.instagram.com/${h}/` : '';
+}
+function telUrl(v) { const d = str(v, 50).replace(/[^\d+]/g, ''); return d.length >= 6 ? 'tel:' + d : ''; }
+/** Google Maps 連結：優先使用自訂網址，否則以地址搜尋 */
+function mapsLink(studio) {
+  if (!studio) return null;
+  const u = safeUrl(studio.googleMapsUrl);
+  if (u) return { url: u, derived: false };
+  if (studio.address) return { url: 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(studio.address), derived: true };
+  return null;
+}
+
+/* ---------- 資料驗證（單筆錯誤不影響整體） ---------- */
+function sanitizeStudio(r) {
+  if (!r || typeof r !== 'object') return null;
+  const id = str(r.id, 80), studioName = str(r.studioName, 100);
+  if (!id || !studioName || !CITIES[r.city]) return null;
+  return {
+    id, city: r.city, studioName,
+    address: str(r.address, 300), googleMapsUrl: str(r.googleMapsUrl, 2000),
+    phone: str(r.phone, 50), website: str(r.website, 2000),
+    line: str(r.line, 200), instagram: str(r.instagram, 200),
+    bookingUrl: str(r.bookingUrl, 2000), transportNotes: str(r.transportNotes, 2000),
+    isDemo: r.isDemo === true, createdAt: str(r.createdAt, 40), updatedAt: str(r.updatedAt, 40),
+  };
+}
+function sanitizeCourse(r) {
+  if (!r || typeof r !== 'object') return null;
+  const id = str(r.id, 80), courseName = str(r.courseName, 100);
+  const weekday = Number(r.weekday);
+  const startTime = normTime(r.startTime), endTime = normTime(r.endTime);
+  if (!id || !courseName || !CITIES[r.city]) return null;
+  if (!Number.isInteger(weekday) || weekday < 1 || weekday > 7) return null;
+  if (!TIME_RE.test(startTime) || !TIME_RE.test(endTime) || toMin(endTime) <= toMin(startTime)) return null;
+  return {
+    id, city: r.city, weekday, startTime, endTime, courseName,
+    teacherName: str(r.teacherName, 60), studioId: str(r.studioId, 80),
+    bookingMethod: str(r.bookingMethod, 500), courseType: str(r.courseType, 40),
+    notes: str(r.notes, 3000), isDemo: r.isDemo === true,
+    createdAt: str(r.createdAt, 40), updatedAt: str(r.updatedAt, 40),
+  };
+}
+/** 檢查並清理整份資料。結構不符會丟出錯誤；個別壞資料會略過並計數 */
+function normalizeData(obj) {
+  if (!obj || typeof obj !== 'object' || !Array.isArray(obj.courses) || !Array.isArray(obj.studios)) {
+    throw new Error('檔案格式不符：找不到 courses（課程）與 studios（教室）清單。');
+  }
+  let skipped = 0, fixed = 0;
+  const studios = [], sIds = new Set();
+  for (const r of obj.studios) {
+    const s = sanitizeStudio(r);
+    if (!s || sIds.has(s.id)) { skipped++; continue; }
+    sIds.add(s.id); studios.push(s);
+  }
+  const sMap = new Map(studios.map(s => [s.id, s]));
+  const courses = [], cIds = new Set();
+  for (const r of obj.courses) {
+    const c = sanitizeCourse(r);
+    if (!c || cIds.has(c.id)) { skipped++; continue; }
+    if (c.studioId) {
+      const s = sMap.get(c.studioId);
+      if (!s || s.city !== c.city) { c.studioId = ''; fixed++; }
+    }
+    cIds.add(c.id); courses.push(c);
+  }
+  const typeColors = {};
+  if (obj.typeColors && typeof obj.typeColors === 'object') {
+    for (const [k, v] of Object.entries(obj.typeColors)) {
+      if (Number.isInteger(v) && v >= 0 && v < PALETTE.length) typeColors[k.slice(0, 40)] = v;
+    }
+  }
+  return { data: { courses, studios, typeColors }, skipped, fixed };
+}
+
+/* ---------- 儲存 ---------- */
+function load() {
+  let raw = null;
+  try { raw = localStorage.getItem(STORAGE_KEY); }
+  catch { storageOk = false; notices.push('此瀏覽器不允許使用 localStorage，資料在關閉頁面後不會保留。'); }
+  if (raw) {
+    try {
+      const obj = JSON.parse(raw);
+      const { data, skipped, fixed } = normalizeData(obj);
+      db = data;
+      lastSaved = str(obj.savedAt, 40);
+      if (skipped || fixed) {
+        stashRaw(raw);
+        notices.push(`讀取時發現 ${skipped} 筆格式錯誤的資料已略過${fixed ? `，另有 ${fixed} 堂課的教室關聯已重設為「尚未設定」` : ''}。原始內容已另存於瀏覽器中。`);
+      }
+    } catch {
+      stashRaw(raw);
+      db = emptyDb();
+      notices.push('儲存的資料無法讀取，已另存原始內容，並以空白課表開啟。若有備份檔，可用「備份／還原」匯入。');
+    }
+  }
+  try {
+    const u = JSON.parse(localStorage.getItem(UI_KEY) || '{}');
+    if (CITIES[u.city]) ui.city = u.city;
+    if (['week', 'day', 'list'].includes(u.view)) ui.view = u.view;
+  } catch { /* 介面偏好壞掉時用預設值 */ }
+}
+function stashRaw(raw) { try { localStorage.setItem(STORAGE_KEY + '.corrupt.' + Date.now(), raw); } catch { /* 空間不足時放棄另存 */ } }
+function save() {
+  if (!storageOk) return false;
+  try {
+    const at = nowIso();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ app: APP_ID, version: DATA_VERSION, savedAt: at, ...db }));
+    lastSaved = at;
+    return true;
+  } catch (e) {
+    toast('儲存失敗：' + (e && e.name === 'QuotaExceededError' ? '瀏覽器儲存空間不足' : (e && e.message) || '未知錯誤'), 'err');
+    return false;
+  }
+}
+function saveUi() { try { localStorage.setItem(UI_KEY, JSON.stringify({ city: ui.city, view: ui.view })); } catch { /* 忽略 */ } }
+
+/* ---------- 查詢 ---------- */
+const getStudio = id => (id ? db.studios.find(s => s.id === id) : null) || null;
+const getCourse = id => db.courses.find(c => c.id === id) || null;
+const cityCourses = (city = ui.city) => db.courses.filter(c => c.city === city);
+const cityStudios = (city = ui.city) => db.studios.filter(s => s.city === city).sort((a, b) => a.studioName.localeCompare(b.studioName, 'zh-Hant'));
+const studioUsage = id => db.courses.filter(c => c.studioId === id);
+function sortCourses(list) {
+  return list.sort((a, b) => a.weekday - b.weekday || a.startTime.localeCompare(b.startTime) || a.endTime.localeCompare(b.endTime) || a.courseName.localeCompare(b.courseName, 'zh-Hant'));
+}
+function ensureTypeColor(type) {
+  if (!type || db.typeColors[type] != null) return;
+  const used = new Array(PALETTE.length).fill(0);
+  Object.values(db.typeColors).forEach(i => used[i]++);
+  db.typeColors[type] = used.indexOf(Math.min(...used));
+}
+function typeColor(type) {
+  if (!type) return NO_TYPE;
+  const i = db.typeColors[type];
+  if (i != null) return PALETTE[i];
+  let h = 0; for (const ch of type) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+function computeOverlaps() {
+  const ids = new Set();
+  const list = sortCourses(cityCourses());
+  for (let i = 0; i < list.length; i++) {
+    for (let j = i + 1; j < list.length && list[j].weekday === list[i].weekday; j++) {
+      if (list[j].startTime < list[i].endTime) { ids.add(list[i].id); ids.add(list[j].id); }
+    }
+  }
+  return ids;
+}
+function activeFilterCount() {
+  const f = ui.filters;
+  return (ui.view !== 'day' && f.weekday ? 1 : 0) + (f.type ? 1 : 0) + (f.studioId ? 1 : 0) + (f.from || f.to ? 1 : 0) + (f.q ? 1 : 0);
+}
+function matches(c) {
+  const f = ui.filters;
+  if (ui.view === 'day') { if (c.weekday !== ui.day) return false; }
+  else if (f.weekday && c.weekday !== Number(f.weekday)) return false;
+  if (f.type && (c.courseType || NONE) !== f.type) return false;
+  if (f.studioId && (c.studioId || NONE) !== f.studioId) return false;
+  if (f.from && c.startTime < f.from) return false;
+  if (f.to && c.endTime > f.to) return false;
+  if (f.q) {
+    const hay = [c.courseName, c.teacherName, getStudio(c.studioId)?.studioName].join(' ').toLowerCase();
+    if (!hay.includes(f.q.toLowerCase())) return false;
+  }
+  return true;
+}
+const visibleCourses = () => sortCourses(cityCourses().filter(matches));
+
+/* =====================================================================
+   畫面
+   ===================================================================== */
+function render() {
+  overlapIds = computeOverlaps();
+  renderTabs();
+  renderFilterOptions();
+  renderNotices();
+  const list = visibleCourses();
+  const total = cityCourses().length;
+  renderDaybar();
+  renderCount(list.length, total);
+  let html;
+  if (!total) html = emptyCity();
+  else if (ui.view === 'week') html = list.length || activeFilterCount() === 0 ? renderWeek(list) : emptyFiltered();
+  else if (ui.view === 'day') html = renderDay(list);
+  else html = list.length ? renderList(list) : emptyFiltered();
+  $('#view').innerHTML = html;
+  saveUi();
+}
+
+function renderTabs() {
+  for (const city of Object.keys(CITIES)) {
+    const b = $('#tab-' + city);
+    b.setAttribute('aria-selected', String(city === ui.city));
+    b.querySelector('.cnt').textContent = cityCourses(city).length || '';
+  }
+  $$('.views button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.view === ui.view)));
+  $('#fl-weekday').hidden = ui.view === 'day';
+  const n = activeFilterCount();
+  $('#filt-n').textContent = n || '';
+  $('#filters').classList.toggle('open', ui.filtersOpen);
+  $('.filt-toggle').setAttribute('aria-expanded', String(ui.filtersOpen));
+  const f = ui.filters;
+  $$('[data-action="preset"]').forEach(b => b.classList.toggle('on', b.dataset.from === f.from && b.dataset.to === f.to));
+  $('#f-hint').textContent = f.from && f.to && f.to <= f.from ? '結束時間需晚於開始時間' : '';
+}
+
+/** 依目前城市重建篩選選項，並保留仍然有效的選擇 */
+function renderFilterOptions() {
+  const f = ui.filters, courses = cityCourses();
+  const types = [...new Set(courses.map(c => c.courseType).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-Hant'));
+  const typeOpts = [['', '全部種類'], ...types.map(t => [t, t])];
+  if (courses.some(c => !c.courseType)) typeOpts.push([NONE, '未分類']);
+  if (!typeOpts.some(o => o[0] === f.type)) f.type = '';
+  setOptions($('#f-type'), typeOpts, f.type);
+
+  const stOpts = [['', '全部教室'], ...cityStudios().map(s => [s.id, s.studioName])];
+  if (courses.some(c => !c.studioId)) stOpts.push([NONE, '未設定教室']);
+  if (!stOpts.some(o => o[0] === f.studioId)) f.studioId = '';
+  setOptions($('#f-studio'), stOpts, f.studioId);
+
+  $('#f-weekday').value = f.weekday;
+  $('#f-from').value = f.from;
+  $('#f-to').value = f.to;
+  if ($('#f-q').value !== f.q) $('#f-q').value = f.q;
+}
+function setOptions(sel, opts, value) {
+  sel.innerHTML = opts.map(([v, t]) => `<option value="${esc(v)}">${esc(t)}</option>`).join('');
+  sel.value = value;
+}
+
+function renderNotices() {
+  $('#notices').innerHTML = notices.map((m, i) =>
+    `<div class="notice" role="status"><span>${esc(m)}</span><button type="button" class="btn ghost sm" data-action="dismiss-notice" data-i="${i}">知道了</button></div>`).join('');
+}
+
+function renderCount(n, total) {
+  const k = activeFilterCount();
+  const scope = ui.view === 'day' ? `週${WD[ui.day]}` : '';
+  const upd = fmtUpdated(lastSaved);
+  $('#count').innerHTML = (total
+    ? `<span>${scope}顯示</span><b>${n}</b><span>堂課　·　${CITIES[ui.city]}共 ${total} 堂${k ? `　·　已套用 ${k} 項篩選` : ''}</span>`
+    : '') + (upd ? `<span class="upd">最後更新：<time datetime="${esc(lastSaved)}">${upd}</time></span>` : '');
+}
+/** 最後更新時間：今天／昨天顯示相對日期，其他顯示完整日期 */
+function fmtUpdated(iso) {
+  const d = new Date(iso);
+  if (!iso || isNaN(d)) return '';
+  const p = n => String(n).padStart(2, '0'), hm = `${p(d.getHours())}:${p(d.getMinutes())}`;
+  const day = isoDate(d);
+  if (day === dateFromOffset(0)) return `今天 ${hm}`;
+  if (day === dateFromOffset(-1)) return `昨天 ${hm}`;
+  return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())}（${WD[d.getDay() || 7]}）${hm}`;
+}
+
+function renderDaybar() {
+  const bar = $('#daybar');
+  bar.hidden = ui.view !== 'day';
+  if (bar.hidden) return;
+  const t = todayWd(), tm = todayWd(1);
+  const isToday = ui.dayDate === dateFromOffset(0), isTomorrow = ui.dayDate === dateFromOffset(1);
+  bar.innerHTML =
+    `<button type="button" class="chip today-chip ${isToday ? 'on' : ''}" data-action="day-offset" data-offset="0">今天（${WD[t]}）</button>` +
+    `<button type="button" class="chip today-chip ${isTomorrow ? 'on' : ''}" data-action="day-offset" data-offset="1">明天（${WD[tm]}）</button>` +
+    `<span class="sep"></span>` +
+    [1, 2, 3, 4, 5, 6, 7].map(d =>
+      `<button type="button" class="chip ${!ui.dayDate && ui.day === d ? 'on' : ''}" data-action="day" data-day="${d}" aria-pressed="${ui.day === d}">週${WD[d]}</button>`).join('') +
+    `<span class="sep"></span><label><span class="sr">指定日期</span><input type="date" id="day-date" value="${esc(ui.dayDate)}" title="指定日期"></label>`;
+}
+
+function card(c, { actions = false } = {}) {
+  const s = getStudio(c.studioId), col = typeColor(c.courseType);
+  const clash = overlapIds.has(c.id);
+  return `<article class="cc ${actions ? 'with-acts' : ''}" style="--tc:${col.ink};--tc-bg:${col.bg}" data-action="detail" data-id="${esc(c.id)}" tabindex="0" role="button"
+      aria-label="${esc(`週${WD[c.weekday]} ${c.startTime} 到 ${c.endTime}，${c.courseName}`)}">
+    <div class="cc-time">${c.startTime}–${c.endTime}</div>
+    <div class="cc-name">${esc(c.courseName)}</div>
+    <div class="cc-meta">
+      <span>${IC.user}${c.teacherName ? esc(c.teacherName) : '<span class="na">老師尚未設定</span>'}</span>
+      <span>${IC.pin}${s ? esc(s.studioName) : '<span class="na">教室尚未設定</span>'}</span>
+    </div>
+    ${c.courseType || clash || c.isDemo ? `<div class="cc-tags">${c.courseType ? `<span class="tag">${esc(c.courseType)}</span>` : ''}${clash ? '<span class="tag clash">時間重疊</span>' : ''}${c.isDemo ? '<span class="tag demo">示範資料</span>' : ''}</div>` : ''}
+    ${actions ? rowActions(c) : ''}
+  </article>`;
+}
+function rowActions(c) {
+  return `<div class="cc-acts acts">
+    <button type="button" class="ib" data-action="edit-course" data-id="${esc(c.id)}" aria-label="編輯 ${esc(c.courseName)}" title="編輯">${IC.edit}</button>
+    <button type="button" class="ib del" data-action="delete-course" data-id="${esc(c.id)}" aria-label="刪除 ${esc(c.courseName)}" title="刪除">${IC.trash}</button></div>`;
+}
+
+function renderWeek(list) {
+  const days = ui.filters.weekday ? [Number(ui.filters.weekday)] : [1, 2, 3, 4, 5, 6, 7];
+  const t = todayWd();
+  return `<div class="week ${days.length === 1 ? 'one' : ''}">` + days.map(d => {
+    const items = list.filter(c => c.weekday === d);
+    return `<section class="wcol ${d === t ? 'today' : ''} ${items.length ? '' : 'is-empty'}" aria-label="週${WD[d]}">
+      <h3 class="wcol-hd"><span class="wd">週${WD[d]}</span><span class="en">${WD_EN[d]}</span>${d === t ? '<span class="tt">今天</span>' : ''}<span class="n">${items.length ? items.length + ' 堂' : ''}</span></h3>
+      <div class="wcol-body">${items.length ? items.map(c => card(c)).join('') : '<p class="none">無課程</p>'}</div></section>`;
+  }).join('') + '</div>';
+}
+
+function renderDay(list) {
+  const dateLabel = ui.dayDate ? (() => { const [, m, d] = ui.dayDate.split('-'); return `${Number(m)}/${Number(d)}`; })() : '';
+  const rel = ui.dayDate === dateFromOffset(0) ? '今天' : ui.dayDate === dateFromOffset(1) ? '明天' : '';
+  const head = `<div class="dayhd"><span class="en">${WD_EN[ui.day]}</span><h2>週${WD[ui.day]}${dateLabel ? `　${dateLabel}` : ''}${rel ? `（${rel}）` : ''}</h2><span class="aside">${list.length} 堂</span></div>`;
+  if (!list.length) {
+    const any = cityCourses().some(c => c.weekday === ui.day);
+    return head + `<div class="empty"><span class="en">Free day</span><h2>${any ? '這天沒有符合篩選條件的課程' : `週${WD[ui.day]}沒有${CITIES[ui.city]}課程`}</h2>
+      <p>${any ? '試著放寬時間區間或清除篩選條件。' : '可以換一天看看，或新增這天的課程。'}</p>
+      <div class="acts">${any ? '<button type="button" class="btn ghost" data-action="clear-filters">清除篩選</button>' : ''}<button type="button" class="btn" data-action="add-course">＋ 新增課程</button></div></div>`;
+  }
+  return head + `<div class="daylist">${list.map(c => card(c, { actions: true })).join('')}</div>`;
+}
+
+function renderList(list) {
+  const t = todayWd();
+  const groups = [1, 2, 3, 4, 5, 6, 7].map(d => [d, list.filter(c => c.weekday === d)]).filter(g => g[1].length);
+  return groups.map(([d, items]) => `<section class="lgroup">
+    <h3 class="lgroup-hd">週${WD[d]}<span class="en">${WD_EN[d]}</span>${d === t ? '<span class="tt">今天</span>' : ''}</h3>
+    <div class="ltable">${items.map(c => {
+      const s = getStudio(c.studioId), col = typeColor(c.courseType);
+      return `<div class="lrow" style="--tc:${col.ink};--tc-bg:${col.bg}" data-action="detail" data-id="${esc(c.id)}" tabindex="0" role="button" aria-label="${esc(`週${WD[c.weekday]} ${c.startTime}，${c.courseName}`)}">
+        <span class="t">${c.startTime}–${c.endTime}</span>
+        <span class="nm">${esc(c.courseName)}${c.courseType ? `<span class="tag">${esc(c.courseType)}</span>` : ''}${overlapIds.has(c.id) ? '<span class="tag clash">時間重疊</span>' : ''}${c.isDemo ? '<span class="tag demo">示範</span>' : ''}</span>
+        <span class="c lte">${IC.user}${c.teacherName ? esc(c.teacherName) : na()}</span>
+        <span class="c lst">${IC.pin}${s ? esc(s.studioName) : na()}</span>
+        <span class="acts">${rowActions(c).replace('cc-acts acts', 'acts')}</span></div>`;
+    }).join('')}</div></section>`).join('');
+}
+
+function emptyCity() {
+  const hasDemo = db.courses.some(c => c.isDemo);
+  return `<div class="empty"><span class="en">Hello</span><h2>${CITIES[ui.city]}還沒有課程</h2>
+    <p>先新增一堂課；教室可以在新增課程時一併建立。${hasDemo ? '' : '也可以先載入示範資料試用（名稱標有【示範】，之後可一鍵清除）。'}</p>
+    <div class="acts"><button type="button" class="btn" data-action="add-course">＋ 新增課程</button>
+    ${hasDemo ? '' : '<button type="button" class="btn ghost" data-action="load-demo">載入示範資料</button>'}</div></div>`;
+}
+function emptyFiltered() {
+  return `<div class="empty"><span class="en">No match</span><h2>沒有符合條件的課程</h2><p>試著放寬時間區間、換個關鍵字，或清除篩選條件。</p>
+    <div class="acts"><button type="button" class="btn ghost" data-action="clear-filters">清除篩選</button></div></div>`;
+}
+
+/* ---------- 課程詳細 ---------- */
+let detailId = null;
+function openDetail(id) {
+  const c = getCourse(id);
+  if (!c) return;
+  detailId = id;
+  const s = getStudio(c.studioId), col = typeColor(c.courseType);
+  const v = x => (x ? esc(x) : na());
+  const link = (url, label) => (url ? `<a class="lnk" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)}${IC.ext}</a>` : null);
+  const textOrLink = (raw, url) => (raw ? (url ? link(url, raw) : esc(raw)) : na());
+  const mins = toMin(c.endTime) - toMin(c.startTime);
+  const nav = mapsLink(s);
+  const bookingUrl = safeUrl(c.bookingMethod);
+  $('#detail-body').innerHTML = `
+    <div class="dt-top" style="--tc:${col.ink};--tc-bg:${col.bg}">
+      <div class="tags">${c.courseType ? `<span class="tag">${esc(c.courseType)}</span>` : ''}<span class="tag" style="--tc:var(--sky);--tc-bg:var(--sky-soft)">${CITIES[c.city]}</span>${overlapIds.has(c.id) ? '<span class="tag clash">時間重疊</span>' : ''}${c.isDemo ? '<span class="tag demo">示範資料</span>' : ''}</div>
+      <h3>${esc(c.courseName)}</h3>
+      <div class="when">每週${WD[c.weekday]}　${c.startTime}–${c.endTime}<small>${mins} 分鐘</small></div>
+    </div>
+    <div class="dt-sec"><h4>WHERE</h4><dl class="kv">
+      <dt>教室</dt><dd>${s ? esc(s.studioName) : na()}</dd>
+      <dt>地址</dt><dd>${s ? v(s.address) : na()}</dd>
+      <dt>交通資訊</dt><dd>${s ? v(s.transportNotes) : na()}</dd>
+    </dl>
+    ${nav
+      ? `<a class="navbtn" id="nav-link" href="${esc(nav.url)}" target="_blank" rel="noopener noreferrer">${IC.map} 用 Google Maps 導航${nav.derived ? '<small>（依地址搜尋）</small>' : ''}</a>`
+      : `<span class="navbtn off">${IC.map} Google Maps 導航：尚未設定${s ? '（請在教室資料填寫地址或導航網址）' : ''}</span>`}
+    </div>
+    <div class="dt-sec"><h4>CLASS</h4><dl class="kv">
+      <dt>老師</dt><dd>${v(c.teacherName)}</dd>
+      <dt>預約方式</dt><dd>${bookingUrl ? link(bookingUrl, c.bookingMethod) : v(c.bookingMethod)}</dd>
+      <dt>課程預約連結</dt><dd>${s ? link(safeUrl(s.bookingUrl), '開啟預約頁面') || na() : na()}</dd>
+      <dt>備註</dt><dd>${v(c.notes)}</dd>
+    </dl></div>
+    <div class="dt-sec"><h4>CONTACT</h4><dl class="kv">
+      <dt>官方 LINE</dt><dd>${s ? textOrLink(s.line, lineUrl(s.line)) : na()}</dd>
+      <dt>Instagram</dt><dd>${s ? textOrLink(s.instagram, igUrl(s.instagram)) : na()}</dd>
+      <dt>電話</dt><dd>${s ? textOrLink(s.phone, telUrl(s.phone)) : na()}</dd>
+      <dt>網站</dt><dd>${s ? textOrLink(s.website, safeUrl(s.website)) : na()}</dd>
+    </dl>
+    ${s ? `<p style="margin:10px 0 0;text-align:right"><button type="button" class="btn ghost sm" data-action="edit-studio" data-id="${esc(s.id)}">編輯這間教室</button></p>` : ''}
+    </div>`;
+  const d = $('#dlg-detail');
+  if (!d.open) d.showModal();
+}
+
+/* ---------- 課程表單 ---------- */
+let editingCourseId = null;
+function fillStudioSelect(city, selected) {
+  const sel = $('#c-studio');
+  const opts = [['', cityStudios(city).length ? '請選擇教室' : '尚無教室，請新增'], ...cityStudios(city).map(s => [s.id, s.studioName]), [NEW_STUDIO, '＋ 新增教室…']];
+  setOptions(sel, opts, getStudio(selected)?.city === city ? selected : '');
+  sel.dataset.prev = sel.value;
+}
+function openCourseForm(id = null) {
+  const c = id ? getCourse(id) : null;
+  if (id && !c) return;
+  editingCourseId = c ? c.id : null;
+  const f = $('#course-form'), el = f.elements;
+  f.reset(); clearErrors(f);
+  $('#course-title').textContent = c ? '編輯課程' : '新增課程';
+  const city = c ? c.city : ui.city;
+  el.city.value = city;
+  el.weekday.value = c ? c.weekday : (ui.view === 'day' ? ui.day : (ui.filters.weekday || ''));
+  el.startTime.value = c ? c.startTime : '';
+  el.endTime.value = c ? c.endTime : '';
+  el.courseName.value = c ? c.courseName : '';
+  el.teacherName.value = c ? c.teacherName : '';
+  el.courseType.value = c ? c.courseType : '';
+  el.bookingMethod.value = c ? c.bookingMethod : '';
+  el.notes.value = c ? c.notes : '';
+  fillStudioSelect(city, c ? c.studioId : '');
+  const types = [...new Set([...db.courses.map(x => x.courseType).filter(Boolean), ...TYPE_SUGGEST])];
+  $('#type-list').innerHTML = types.map(t => `<option value="${esc(t)}">`).join('');
+  $('#dlg-course').showModal();
+  el.courseName.focus();
+}
+function readCourseForm() {
+  const el = $('#course-form').elements;
+  const v = {
+    city: el.city.value, weekday: Number(el.weekday.value),
+    startTime: normTime(el.startTime.value), endTime: normTime(el.endTime.value),
+    courseName: el.courseName.value.trim(), teacherName: el.teacherName.value.trim(),
+    studioId: el.studioId.value === NEW_STUDIO ? '' : el.studioId.value,
+    bookingMethod: el.bookingMethod.value.trim(), courseType: el.courseType.value.trim(), notes: el.notes.value.trim(),
+  };
+  const e = {};
+  if (!CITIES[v.city]) e.city = '請選擇城市';
+  if (!(v.weekday >= 1 && v.weekday <= 7)) e.weekday = '請選擇星期';
+  if (!TIME_RE.test(v.startTime)) e.startTime = '請輸入開始時間';
+  if (!TIME_RE.test(v.endTime)) e.endTime = '請輸入結束時間';
+  else if (!e.startTime && toMin(v.endTime) <= toMin(v.startTime)) e.endTime = '結束時間必須晚於開始時間';
+  if (!v.courseName) e.courseName = '請輸入課程名稱';
+  if (!v.studioId) e.studioId = '請選擇教室，或選「＋ 新增教室…」建立';
+  else if (getStudio(v.studioId)?.city !== v.city) e.studioId = '這間教室不屬於所選城市';
+  return { v, e };
+}
+function submitCourse(ev) {
+  ev.preventDefault();
+  const f = $('#course-form');
+  const { v, e } = readCourseForm();
+  if (showErrors(f, e)) return;
+  const now = nowIso();
+  let course;
+  if (editingCourseId) {
+    course = getCourse(editingCourseId);
+    if (!course) { toast('這堂課已不存在', 'err'); $('#dlg-course').close(); render(); return; }
+    Object.assign(course, v, { updatedAt: now });
+  } else {
+    course = { id: uid('c'), ...v, isDemo: false, createdAt: now, updatedAt: now };
+    db.courses.push(course);
+  }
+  ensureTypeColor(course.courseType);
+  if (!save()) return;
+  const wasEdit = !!editingCourseId;
+  $('#dlg-course').close();
+  const switched = course.city !== ui.city;
+  if (switched) ui.city = course.city;
+  render();
+  const hidden = !matches(course);
+  toast(`${wasEdit ? '已更新' : '已新增'}「${course.courseName}」${switched ? `，已切換到${CITIES[course.city]}課程` : ''}${hidden ? '（目前的篩選條件下不會顯示）' : ''}`, 'ok');
+  if (wasEdit && $('#dlg-detail').open && detailId === course.id) openDetail(course.id);
+}
+async function deleteCourse(id) {
+  const c = getCourse(id);
+  if (!c) return;
+  const ok = await confirmBox({
+    title: '刪除課程',
+    html: `確定要刪除「<b>${esc(c.courseName)}</b>」（每週${WD[c.weekday]} ${c.startTime}–${c.endTime}）嗎？<br>刪除後無法復原。`,
+    ok: '刪除', danger: true,
+  });
+  if (!ok) return;
+  db.courses = db.courses.filter(x => x.id !== id);
+  save();
+  if ($('#dlg-detail').open && detailId === id) $('#dlg-detail').close();
+  render();
+  toast(`已刪除「${c.courseName}」`, 'ok');
+}
+
+/* ---------- 表單錯誤顯示 ---------- */
+function clearErrors(form) {
+  $$('.err', form).forEach(x => (x.textContent = ''));
+  $$('[aria-invalid]', form).forEach(x => x.removeAttribute('aria-invalid'));
+}
+function showErrors(form, errors) {
+  clearErrors(form);
+  const keys = Object.keys(errors);
+  for (const k of keys) {
+    const box = $(`.err[data-for="${k}"]`, form);
+    if (box) box.textContent = errors[k];
+    form.elements[k]?.setAttribute('aria-invalid', 'true');
+  }
+  if (keys.length) form.elements[keys[0]]?.focus();
+  return keys.length > 0;
+}
+
+/* ---------- 教室管理 ---------- */
+let studioMgrCity = 'taipei';
+function openStudioManager() {
+  studioMgrCity = ui.city;
+  renderStudioList();
+  $('#dlg-studios').showModal();
+}
+function renderStudioList() {
+  $$('#st-city button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.city === studioMgrCity)));
+  const list = cityStudios(studioMgrCity);
+  $('#st-list').innerHTML = list.length ? list.map(s => {
+    const n = studioUsage(s.id).length;
+    return `<div class="st"><div><div class="nm">${esc(s.studioName)}${s.isDemo ? ' <span class="tag demo">示範</span>' : ''}</div>
+      <div class="ad">${s.address ? esc(s.address) : na('地址尚未設定')}</div>
+      <div class="us">${n ? `${n} 堂課使用中` : '目前沒有課程使用'}</div></div>
+      <div class="acts"><button type="button" class="ib" data-action="edit-studio" data-id="${esc(s.id)}" aria-label="編輯 ${esc(s.studioName)}" title="編輯">${IC.edit}</button>
+      <button type="button" class="ib del" data-action="delete-studio" data-id="${esc(s.id)}" aria-label="刪除 ${esc(s.studioName)}" title="刪除">${IC.trash}</button></div></div>`;
+  }).join('') : `<div class="empty" style="padding:28px 16px"><h2>${CITIES[studioMgrCity]}還沒有教室</h2><p>新增後即可在課程中選用，多堂課可共用同一間教室。</p></div>`;
+}
+
+let editingStudioId = null, studioSavedCb = null;
+function openStudioForm(id = null, { city, onSaved } = {}) {
+  const s = id ? getStudio(id) : null;
+  if (id && !s) return;
+  editingStudioId = s ? s.id : null;
+  studioSavedCb = onSaved || null;
+  const f = $('#studio-form'), el = f.elements;
+  f.reset(); clearErrors(f);
+  $('#studio-title').textContent = s ? '編輯教室' : '新增教室';
+  el.city.value = s ? s.city : (city || ui.city);
+  for (const k of ['studioName', 'address', 'googleMapsUrl', 'phone', 'website', 'line', 'instagram', 'bookingUrl', 'transportNotes']) el[k].value = s ? s[k] : '';
+  const used = s ? studioUsage(s.id).length : 0;
+  // 由課程表單開啟時，城市跟著課程走；已有課程使用的教室不可換城市
+  el.city.disabled = used > 0 || (!!onSaved && !s);
+  $('#s-city-help').textContent = used ? `已有 ${used} 堂課使用，不能更改城市` : (onSaved && !s ? '與課程所選城市相同' : '');
+  $('#dlg-studio').showModal();
+  el.studioName.focus();
+}
+function submitStudio(ev) {
+  ev.preventDefault();
+  const f = $('#studio-form'), el = f.elements;
+  const v = { city: el.city.value };
+  for (const k of ['studioName', 'address', 'googleMapsUrl', 'phone', 'website', 'line', 'instagram', 'bookingUrl', 'transportNotes']) v[k] = el[k].value.trim();
+  const e = {};
+  if (!v.studioName) e.studioName = '請輸入教室名稱';
+  else if (db.studios.some(s => s.id !== editingStudioId && s.city === v.city && s.studioName === v.studioName)) e.studioName = `${CITIES[v.city]}已有同名教室`;
+  if (!CITIES[v.city]) e.city = '請選擇城市';
+  for (const k of ['googleMapsUrl', 'website', 'bookingUrl']) if (v[k] && !safeUrl(v[k])) e[k] = '請輸入以 https:// 開頭的完整網址';
+  if (v.instagram && !igUrl(v.instagram)) e.instagram = '請輸入 @帳號 或完整網址';
+  if (v.line && /^https?:/i.test(v.line) && !lineUrl(v.line)) e.line = '網址格式不正確';
+  if (editingStudioId) {
+    const old = getStudio(editingStudioId);
+    if (old && old.city !== v.city && studioUsage(old.id).length) e.city = '已有課程使用，不能更改城市';
+  }
+  if (showErrors(f, e)) return;
+  const now = nowIso();
+  let s;
+  if (editingStudioId) {
+    s = getStudio(editingStudioId);
+    if (!s) { toast('這間教室已不存在', 'err'); $('#dlg-studio').close(); return; }
+    Object.assign(s, v, { updatedAt: now });
+  } else {
+    s = { id: uid('s'), ...v, isDemo: false, createdAt: now, updatedAt: now };
+    db.studios.push(s);
+  }
+  if (!save()) return;
+  const wasEdit = !!editingStudioId, cb = studioSavedCb;
+  studioSavedCb = null;
+  $('#dlg-studio').close();
+  render();
+  if ($('#dlg-studios').open) { studioMgrCity = s.city; renderStudioList(); }
+  if ($('#dlg-detail').open && detailId) openDetail(detailId);
+  if (cb) cb(s);
+  toast(`${wasEdit ? '已更新' : '已新增'}教室「${s.studioName}」`, 'ok');
+}
+async function deleteStudio(id) {
+  const s = getStudio(id);
+  if (!s) return;
+  const used = sortCourses(studioUsage(id));
+  const ok = await confirmBox({
+    title: '刪除教室',
+    html: used.length
+      ? `「<b>${esc(s.studioName)}</b>」目前有 <b>${used.length}</b> 堂課使用：<ul>${used.slice(0, 8).map(c => `<li>週${WD[c.weekday]} ${c.startTime} ${esc(c.courseName)}</li>`).join('')}${used.length > 8 ? `<li>…另外 ${used.length - 8} 堂</li>` : ''}</ul>刪除後，這些課程會保留，但教室與地址會變成「尚未設定」，需要重新指定。確定要刪除嗎？`
+      : `確定要刪除「<b>${esc(s.studioName)}</b>」嗎？目前沒有課程使用這間教室。`,
+    ok: used.length ? '仍要刪除' : '刪除', danger: true,
+  });
+  if (!ok) return;
+  db.studios = db.studios.filter(x => x.id !== id);
+  used.forEach(c => { c.studioId = ''; c.updatedAt = nowIso(); });
+  save();
+  render();
+  if ($('#dlg-studios').open) renderStudioList();
+  toast(`已刪除教室「${s.studioName}」${used.length ? `，${used.length} 堂課需重新指定教室` : ''}`, 'ok');
+}
+
+/* ---------- 備份／還原 ---------- */
+function openDataDialog() { renderDataStats(); $('#dlg-data').showModal(); }
+function renderDataStats() {
+  $('#data-stats').innerHTML = Object.entries(CITIES).map(([k, name]) =>
+    `<div class="stat"><div class="k">${name}</div><div class="v">${cityCourses(k).length} 堂課 · ${cityStudios(k).length} 間教室</div></div>`).join('');
+  const demoN = db.courses.filter(c => c.isDemo).length + db.studios.filter(s => s.isDemo).length;
+  $('#btn-clear-demo').disabled = demoN === 0;
+  $('#btn-load-demo').disabled = DEMO.courses.every(d => getCourse(d.id));
+  $('#demo-desc').textContent = `示範資料的名稱都標有「【示範】」，不是真實課表。目前有 ${demoN} 筆示範資料。`;
+}
+function stamp() { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`; }
+function exportJson() {
+  const payload = { app: APP_ID, version: DATA_VERSION, exportedAt: nowIso(), courses: db.courses, studios: db.studios, typeColors: db.typeColors };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `課表備份_${stamp()}.json`;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast(`已匯出備份：${db.courses.length} 堂課、${db.studios.length} 間教室`, 'ok');
+}
+async function importJson(file) {
+  if (!file) return;
+  const fail = msg => confirmBox({ title: '無法匯入', html: esc(msg), ok: '知道了', alertOnly: true });
+  if (file.size > 5 * 1024 * 1024) return fail('檔案超過 5 MB，看起來不是課表備份檔。');
+  let obj;
+  try { obj = JSON.parse(await file.text()); } catch { return fail('這不是有效的 JSON 檔案，請確認選的是本課表匯出的備份檔。'); }
+  if (obj && obj.app && obj.app !== APP_ID) return fail('這個 JSON 檔不是本課表匯出的備份。');
+  let result;
+  try { result = normalizeData(obj); } catch (e) { return fail(e.message); }
+  const { data, skipped, fixed } = result;
+  if (!data.courses.length && !data.studios.length) return fail(`檔案中沒有可匯入的課程或教室${skipped ? `（${skipped} 筆格式錯誤）` : ''}。`);
+  const cnt = (list, city) => list.filter(x => x.city === city).length;
+  const ok = await confirmBox({
+    title: '匯入並覆蓋資料',
+    html: `檔案內容：<ul>${Object.entries(CITIES).map(([k, n]) => `<li>${n}：${cnt(data.courses, k)} 堂課、${cnt(data.studios, k)} 間教室</li>`).join('')}</ul>
+      ${skipped ? `<p style="color:var(--chk)">有 ${skipped} 筆格式錯誤的資料會被略過。</p>` : ''}
+      ${fixed ? `<p style="color:var(--chk)">有 ${fixed} 堂課找不到對應教室，教室將設為「尚未設定」。</p>` : ''}
+      <p><b>匯入會覆蓋目前的 ${db.courses.length} 堂課與 ${db.studios.length} 間教室。</b>確定要繼續嗎？</p>`,
+    ok: '覆蓋並匯入', danger: true,
+  });
+  if (!ok) return;
+  db = data;
+  save();
+  render();
+  if ($('#dlg-data').open) renderDataStats();
+  toast(`已匯入 ${data.courses.length} 堂課、${data.studios.length} 間教室`, 'ok');
+}
+async function clearAll() {
+  const ok1 = await confirmBox({ title: '清除所有資料', html: `將刪除台北與中壢的全部 <b>${db.courses.length}</b> 堂課與 <b>${db.studios.length}</b> 間教室。<br>建議先匯出備份。要繼續嗎？`, ok: '繼續', danger: true });
+  if (!ok1) return;
+  const ok2 = await confirmBox({ title: '再次確認', html: '此動作無法復原。', ok: '永久清除', danger: true, requireText: '清除' });
+  if (!ok2) return;
+  db = emptyDb();
+  save();
+  render();
+  if ($('#dlg-data').open) renderDataStats();
+  toast('已清除所有資料', 'ok');
+}
+
+/* ---------- 示範資料（名稱皆標示【示範】，地址為公開的車站地址，僅測試導航用） ---------- */
+const DEMO_NOTE = '示範資料，不是真實課表；可在「備份／還原 → 清除示範資料」一鍵刪除。';
+const DEMO = {
+  studios: [
+    { id: 'demo_s_tpe1', city: 'taipei', studioName: '【示範】台北車站旁教室', address: '臺北市中正區北平西路3號', transportNotes: '示範用：此為臺北車站地址，只用來測試導航連結，並非真實教室。' },
+    { id: 'demo_s_tpe2', city: 'taipei', studioName: '【示範】資料未填教室' },
+    { id: 'demo_s_zl1', city: 'zhongli', studioName: '【示範】中壢車站旁教室', address: '桃園市中壢區中和路139號', transportNotes: '示範用：此為中壢車站地址，只用來測試導航連結，並非真實教室。' },
+  ],
+  courses: [
+    { id: 'demo_c1', city: 'taipei', weekday: 1, startTime: '10:00', endTime: '11:00', courseName: '【示範】晨間伸展', teacherName: '示範老師 A', studioId: 'demo_s_tpe1', courseType: '伸展' },
+    { id: 'demo_c2', city: 'taipei', weekday: 2, startTime: '19:00', endTime: '20:30', courseName: '【示範】哈達瑜伽', teacherName: '示範老師 B', studioId: 'demo_s_tpe1', courseType: '瑜伽', bookingMethod: '示範：官方 LINE 預約' },
+    { id: 'demo_c3', city: 'taipei', weekday: 2, startTime: '20:00', endTime: '21:00', courseName: '【示範】核心皮拉提斯', teacherName: '示範老師 C', studioId: 'demo_s_tpe2', courseType: '皮拉提斯' },
+    { id: 'demo_c4', city: 'taipei', weekday: 4, startTime: '14:00', endTime: '15:30', courseName: '【示範】午後流動瑜伽', teacherName: '示範老師 B', studioId: 'demo_s_tpe1', courseType: '瑜伽' },
+    { id: 'demo_c5', city: 'taipei', weekday: 6, startTime: '15:00', endTime: '16:00', courseName: '【示範】爵士舞入門', teacherName: '', studioId: 'demo_s_tpe2', courseType: '舞蹈' },
+    { id: 'demo_c6', city: 'zhongli', weekday: 3, startTime: '18:30', endTime: '19:30', courseName: '【示範】有氧舞蹈', teacherName: '示範老師 D', studioId: 'demo_s_zl1', courseType: '舞蹈' },
+    { id: 'demo_c7', city: 'zhongli', weekday: 6, startTime: '10:00', endTime: '11:00', courseName: '【示範】週末瑜伽', teacherName: '示範老師 E', studioId: 'demo_s_zl1', courseType: '瑜伽' },
+  ],
+};
+function loadDemo() {
+  const now = nowIso();
+  let added = 0;
+  for (const s of DEMO.studios) if (!getStudio(s.id)) { db.studios.push(sanitizeStudio({ ...s, isDemo: true, createdAt: now, updatedAt: now })); added++; }
+  for (const c of DEMO.courses) if (!getCourse(c.id)) {
+    db.courses.push(sanitizeCourse({ ...c, notes: DEMO_NOTE, isDemo: true, createdAt: now, updatedAt: now }));
+    ensureTypeColor(c.courseType); added++;
+  }
+  save(); render();
+  if ($('#dlg-data').open) renderDataStats();
+  toast(added ? `已載入 ${added} 筆示範資料` : '示範資料已存在', 'ok');
+}
+async function clearDemo() {
+  const nc = db.courses.filter(c => c.isDemo).length, ns = db.studios.filter(s => s.isDemo).length;
+  if (!nc && !ns) return;
+  const ok = await confirmBox({ title: '清除示範資料', html: `將刪除 ${nc} 堂示範課程與 ${ns} 間示範教室，你自己新增的資料不受影響。`, ok: '清除', danger: true });
+  if (!ok) return;
+  const demoStudioIds = new Set(db.studios.filter(s => s.isDemo).map(s => s.id));
+  db.courses = db.courses.filter(c => !c.isDemo);
+  db.courses.forEach(c => { if (demoStudioIds.has(c.studioId)) c.studioId = ''; });
+  db.studios = db.studios.filter(s => !s.isDemo);
+  save(); render();
+  if ($('#dlg-data').open) renderDataStats();
+  toast('已清除示範資料', 'ok');
+}
+
+/* ---------- 確認視窗 / 提示 ---------- */
+function confirmBox({ title, html, ok = '確定', danger = false, requireText = '', alertOnly = false }) {
+  return new Promise(resolve => {
+    const d = $('#dlg-confirm'), okBtn = $('#confirm-ok'), input = $('#confirm-type');
+    $('#confirm-title').textContent = title;
+    $('#confirm-msg').innerHTML = html;
+    okBtn.textContent = ok;
+    okBtn.className = 'btn' + (danger ? ' danger' : '');
+    $('#confirm-cancel').hidden = alertOnly;
+    $('#confirm-type-wrap').hidden = !requireText;
+    input.value = '';
+    $('#confirm-type-label').textContent = requireText ? `請輸入「${requireText}」以確認` : '';
+    okBtn.disabled = !!requireText;
+    input.oninput = () => { okBtn.disabled = input.value.trim() !== requireText; };
+    d.returnValue = '';
+    d.addEventListener('close', () => resolve(!alertOnly && d.returnValue === 'ok'), { once: true });
+    d.showModal();
+    (requireText ? input : alertOnly ? okBtn : $('#confirm-cancel')).focus();
+  });
+}
+function toast(msg, kind = '') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind;
+  el.textContent = msg;
+  $('#toast').append(el);
+  setTimeout(() => el.remove(), kind === 'err' ? 5000 : 2800);
+}
+
+/* =====================================================================
+   事件
+   ===================================================================== */
+document.addEventListener('click', e => {
+  const dlg = e.target.tagName === 'DIALOG' ? e.target : null;
+  // 點背景關閉（表單視窗除外，避免誤關遺失輸入）
+  if (dlg && ['dlg-detail', 'dlg-studios', 'dlg-data'].includes(dlg.id)) { dlg.close(); return; }
+  const t = e.target.closest('[data-action]');
+  if (!t) return;
+  const { action, id } = t.dataset;
+  switch (action) {
+    case 'city':
+      if (ui.city !== t.dataset.city) { ui.city = t.dataset.city; render(); window.scrollTo({ top: 0 }); }
+      break;
+    case 'view':
+      ui.view = t.dataset.view;
+      if (ui.view === 'day' && !ui.dayDate && ui.filters.weekday) ui.day = Number(ui.filters.weekday);
+      render();
+      break;
+    case 'day': ui.day = Number(t.dataset.day); ui.dayDate = ''; render(); break;
+    case 'day-offset': {
+      const off = Number(t.dataset.offset);
+      ui.day = todayWd(off); ui.dayDate = dateFromOffset(off); render(); break;
+    }
+    case 'preset': {
+      const f = ui.filters, same = f.from === t.dataset.from && f.to === t.dataset.to;
+      f.from = same ? '' : t.dataset.from; f.to = same ? '' : t.dataset.to;
+      render(); break;
+    }
+    case 'clear-filters':
+      ui.filters = { weekday: '', type: '', studioId: '', from: '', to: '', q: '' };
+      render(); toast('已清除篩選條件'); break;
+    case 'toggle-filters': ui.filtersOpen = !ui.filtersOpen; renderTabs(); break;
+    case 'detail': openDetail(id); break;
+    case 'add-course': openCourseForm(); break;
+    case 'edit-course': openCourseForm(id); break;
+    case 'delete-course': deleteCourse(id); break;
+    case 'studios': openStudioManager(); break;
+    case 'st-city': studioMgrCity = t.dataset.city; renderStudioList(); break;
+    case 'add-studio': openStudioForm(null, { city: studioMgrCity }); break;
+    case 'edit-studio': openStudioForm(id); break;
+    case 'delete-studio': deleteStudio(id); break;
+    case 'data': openDataDialog(); break;
+    case 'export': exportJson(); break;
+    case 'import': $('#import-file').value = ''; $('#import-file').click(); break;
+    case 'load-demo': loadDemo(); break;
+    case 'clear-demo': clearDemo(); break;
+    case 'clear-all': clearAll(); break;
+    case 'dismiss-notice': notices.splice(Number(t.dataset.i), 1); renderNotices(); break;
+    case 'close': t.closest('dialog')?.close(); break;
+  }
+});
+// 課程卡片可用鍵盤開啟
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role="button"][data-action="detail"]')) {
+    e.preventDefault(); openDetail(e.target.dataset.id);
+  }
+});
+
+$('#detail-edit').addEventListener('click', () => { const id = detailId; $('#dlg-detail').close(); openCourseForm(id); });
+$('#detail-del').addEventListener('click', () => deleteCourse(detailId));
+$('#course-form').addEventListener('submit', submitCourse);
+$('#studio-form').addEventListener('submit', submitStudio);
+$('#confirm-cancel').addEventListener('click', () => $('#dlg-confirm').close(''));
+$('#import-file').addEventListener('change', e => importJson(e.target.files[0]));
+
+$('#c-city').addEventListener('change', e => fillStudioSelect(e.target.value, $('#c-studio').value));
+$('#c-studio').addEventListener('change', e => {
+  const sel = e.target;
+  if (sel.value !== NEW_STUDIO) { sel.dataset.prev = sel.value; return; }
+  const city = $('#c-city').value;
+  sel.value = sel.dataset.prev || '';
+  openStudioForm(null, { city, onSaved: s => { fillStudioSelect(city, s.id); sel.removeAttribute('aria-invalid'); $('.err[data-for="studioId"]').textContent = ''; } });
+});
+// 輸入時即時清除該欄位錯誤
+for (const form of [$('#course-form'), $('#studio-form')]) {
+  form.addEventListener('input', e => {
+    if (e.target.getAttribute('aria-invalid') !== 'true') return;
+    e.target.removeAttribute('aria-invalid');
+    const box = $(`.err[data-for="${e.target.name}"]`, form);
+    if (box) box.textContent = '';
+  });
+}
+
+$('#f-q').addEventListener('input', e => { ui.filters.q = e.target.value.trim(); render(); });
+$('#f-weekday').addEventListener('change', e => { ui.filters.weekday = e.target.value; render(); });
+$('#f-type').addEventListener('change', e => { ui.filters.type = e.target.value; render(); });
+$('#f-studio').addEventListener('change', e => { ui.filters.studioId = e.target.value; render(); });
+$('#f-from').addEventListener('change', e => { ui.filters.from = normTime(e.target.value); render(); });
+$('#f-to').addEventListener('change', e => { ui.filters.to = normTime(e.target.value); render(); });
+$('#daybar').addEventListener('change', e => {
+  if (e.target.id !== 'day-date' || !e.target.value) return;
+  ui.dayDate = e.target.value; ui.day = wdOfIso(e.target.value); render();
+});
+// 其他分頁修改資料時同步
+window.addEventListener('storage', e => {
+  if (e.key !== STORAGE_KEY) return;
+  try {
+    const obj = JSON.parse(e.newValue || '{"courses":[],"studios":[]}');
+    db = normalizeData(obj).data; lastSaved = str(obj.savedAt, 40); render();
+  } catch { /* 忽略 */ }
+});
+
+/* ---------- 啟動 ---------- */
+$('#f-weekday').insertAdjacentHTML('beforeend', [1, 2, 3, 4, 5, 6, 7].map(d => `<option value="${d}">週${WD[d]}</option>`).join(''));
+$('#c-weekday').insertAdjacentHTML('beforeend', [1, 2, 3, 4, 5, 6, 7].map(d => `<option value="${d}">週${WD[d]}</option>`).join(''));
+load();
+render();
+</script>
+</body>
+</html>
